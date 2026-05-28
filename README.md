@@ -10,7 +10,11 @@ ln -sf ~/dotfiles/zshrc ~/.zshrc
 source ~/.zshrc
 ```
 
-zinit and all plugins are auto-installed on first terminal open.
+On first run, `~/.zshrc` will automatically:
+- Install [zinit](https://github.com/zdharma-continuum/zinit) plugin manager
+- Download and cache all plugins (alanpeabody theme, git plugin, syntax highlighting)
+
+Subsequent terminal opens are fast (~170ms).
 
 ## Files
 
