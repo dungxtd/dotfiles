@@ -26,6 +26,7 @@ source "$ZINIT_HOME/zinit.zsh"
 
 # Plugins
 setopt PROMPT_SUBST
+autoload -U colors && colors
 autoload -Uz add-zsh-hook
 
 # required by OMZ::lib/git.zsh but missing from downloaded functions.zsh
@@ -38,9 +39,6 @@ zinit snippet OMZ::lib/functions.zsh
 zinit snippet OMZ::lib/git.zsh
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit light zsh-users/zsh-syntax-highlighting
-
-# Colors (cross-platform: macOS + Ubuntu)
-autoload -U colors && colors
 
 # Git prompt vars (used by git_prompt_info from OMZ git lib)
 ZSH_THEME_GIT_PROMPT_PREFIX="%{$fg[blue]%}git:(%{$fg[red]%}"
