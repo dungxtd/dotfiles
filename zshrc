@@ -26,7 +26,6 @@ source "$ZINIT_HOME/zinit.zsh"
 
 # Plugins
 setopt PROMPT_SUBST
-autoload -U colors && colors
 autoload -Uz add-zsh-hook
 
 # required by OMZ::lib/git.zsh but missing from downloaded functions.zsh
@@ -41,13 +40,12 @@ zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit light zsh-users/zsh-syntax-highlighting
 
 # Git prompt vars (used by git_prompt_info from OMZ git lib)
-ZSH_THEME_GIT_PROMPT_PREFIX="%{$fg[blue]%}git:(%{$fg[red]%}"
-ZSH_THEME_GIT_PROMPT_SUFFIX="%{$reset_color%}"
-ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg[blue]%}) %{$fg[yellow]%}✗%{$reset_color%}"
-ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg[blue]%})%{$reset_color%}"
+ZSH_THEME_GIT_PROMPT_PREFIX="%F{blue}git:(%F{red}"
+ZSH_THEME_GIT_PROMPT_SUFFIX="%f"
+ZSH_THEME_GIT_PROMPT_DIRTY="%F{blue}) %F{yellow}✗%f"
+ZSH_THEME_GIT_PROMPT_CLEAN="%F{blue})%f"
 
-# Manual prompt (no theme — themes override via precmd)
-PROMPT='%{$fg[magenta]%}%n%{$reset_color%} %{$fg[blue]%}%~%{$reset_color%} $(git_prompt_info)$ '
+PROMPT='%F{magenta}%n%f %F{blue}%~%f $(git_prompt_info)$ '
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
