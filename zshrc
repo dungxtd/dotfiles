@@ -45,7 +45,9 @@ ZSH_THEME_GIT_PROMPT_SUFFIX="%f"
 ZSH_THEME_GIT_PROMPT_DIRTY="%F{blue}) %F{yellow}✗%f"
 ZSH_THEME_GIT_PROMPT_CLEAN="%F{blue})%f"
 
-PROMPT='%F{magenta}%n%f %F{blue}%~%f ${(%)$(git_prompt_info)}$ '
+_my_git_prompt() { _MY_GIT_INFO="${(%)$(git_prompt_info)}"; }
+add-zsh-hook precmd _my_git_prompt
+PROMPT='%F{magenta}%n%f %F{blue}%~%f ${_MY_GIT_INFO}$ '
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
