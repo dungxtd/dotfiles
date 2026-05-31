@@ -5,8 +5,8 @@ Personal shell config for macOS and Ubuntu. Symlinked into `$HOME`.
 ## Setup new machine
 
 ```bash
-git clone https://github.com/dungxtd/dotfiles.git ~/dotfiles
-ln -sf ~/dotfiles/zshrc ~/.zshrc
+git clone https://github.com/dungxtd/dotfiles.git <path>
+ln -sf <path>/zshrc ~/.zshrc
 source ~/.zshrc
 ```
 
