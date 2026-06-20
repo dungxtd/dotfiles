@@ -24,10 +24,16 @@ setopt PROMPT_SUBST
 autoload -U colors && colors
 autoload -Uz add-zsh-hook
 
-# required by OMZ::lib/git.zsh but missing from downloaded functions.zsh
+# Required by OMZ::lib/git.zsh's async git prompt machinery.
+# Creates a capture wrapper per worker that stores output into the cache
+# array that git_prompt_info/git_prompt_status read from, instead of
+# echoing to terminal directly.
+typeset -gA _OMZ_ASYNC_OUTPUT
 function _omz_register_handler() {
-  add-zsh-hook chpwd "$1"
-  add-zsh-hook precmd "$1"
+  local fn="$1"
+  eval "function _omz_capture_${fn}() { _OMZ_ASYNC_OUTPUT[${fn}]=\"\$(${fn})\" }"
+  add-zsh-hook chpwd "_omz_capture_${fn}"
+  add-zsh-hook precmd "_omz_capture_${fn}"
 }
 
 zinit snippet OMZ::lib/functions.zsh
@@ -38,8 +44,23 @@ zinit light zsh-users/zsh-syntax-highlighting
 
 function ruby_prompt_info() { }
 
-# Override prompt (remove hostname)
-PROMPT='%{$fg[magenta]%}%n%{$reset_color%} %{$fg[blue]%}%~%{$reset_color%}$ '
+# Override prompt (remove hostname) — uses %F/%f (nesting-safe) instead of
+# %{...%}, since kiro-cli's OSC prompt-wrapping also uses %{...%} and zsh
+# does not support nesting those markers.
+PROMPT='%F{magenta}%n%f %F{blue}%~%f$ '
+
+ZSH_THEME_GIT_PROMPT_PREFIX="%F{green}"
+ZSH_THEME_GIT_PROMPT_SUFFIX="%f"
+ZSH_THEME_GIT_PROMPT_DIRTY=""
+ZSH_THEME_GIT_PROMPT_CLEAN=""
+ZSH_THEME_GIT_PROMPT_ADDED="%F{green} ✚%f"
+ZSH_THEME_GIT_PROMPT_MODIFIED="%F{blue} ✹%f"
+ZSH_THEME_GIT_PROMPT_DELETED="%F{red} ✖%f"
+ZSH_THEME_GIT_PROMPT_RENAMED="%F{magenta} ➜%f"
+ZSH_THEME_GIT_PROMPT_UNMERGED="%F{yellow} ═%f"
+ZSH_THEME_GIT_PROMPT_UNTRACKED="%F{cyan} ✭%f"
+
+RPROMPT='%(?..%F{red}%? ↵%f) $(git_prompt_status)$(git_prompt_info)'
 
 # bun
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
