@@ -12,6 +12,8 @@ elif [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
   BREW_PREFIX=/home/linuxbrew/.linuxbrew
 fi
 
+[[ -n $BREW_PREFIX ]] && eval "$($BREW_PREFIX/bin/brew shellenv)"
+
 # zinit — auto-install if missing
 ZINIT_HOME="$HOME/.local/share/zinit/zinit.git"
 [[ ! -d $ZINIT_HOME ]] && git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
@@ -73,8 +75,27 @@ alias cx='codex --dangerously-bypass-approvals-and-sandbox'
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 export PATH="$HOME/scripts:$PATH"
 
-eval "$($BREW_PREFIX/bin/mise activate zsh)"
+_mise=$(
+  command -v "$HOME/.local/bin/mise" 2>/dev/null ||
+  { [ -n "$BREW_PREFIX" ] && command -v "$BREW_PREFIX/bin/mise" 2>/dev/null; } ||
+  command -v mise 2>/dev/null
+)
+[ -n "$_mise" ] && eval "$($_mise activate zsh)"
+unset _mise
 
+
+# Word navigation with Ctrl+Left/Right
+bindkey "^[[1;5C" forward-word
+bindkey "^[[1;5D" backward-word
+bindkey "^[Oc" forward-word
+bindkey "^[Od" backward-word
+
+
+### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
+export PATH="/home/dungtd19/.rd/bin:$PATH"
+### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
+
+export NODE_EXTRA_CA_CERTS="/home/dungtd19/Documents/vingroup-enterprise-ca/vingroup-enterprise-ca.pem"
 
 # Kiro CLI post block. Keep at the bottom of this file.
 [[ -f "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh"
