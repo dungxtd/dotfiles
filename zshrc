@@ -5,6 +5,13 @@
 
 export GTK_IM_MODULE=ibus
 
+# Open PAM RDP file with drive transfer support
+rdp() {
+  echo "redirectdrives:i:1" >> "$1"
+  echo "screen mode id:i:1" >> "$1"
+  xfreerdp "$1" /drive:transfer,"$HOME/Downloads" /cert:ignore
+}
+
 # Detect brew prefix (macOS: /opt/homebrew, Linux: /home/linuxbrew/.linuxbrew)
 if [[ -x /opt/homebrew/bin/brew ]]; then
   BREW_PREFIX=/opt/homebrew
@@ -99,3 +106,4 @@ export NODE_EXTRA_CA_CERTS="/home/dungtd19/Documents/vingroup-enterprise-ca/ving
 
 # Kiro CLI post block. Keep at the bottom of this file.
 [[ -f "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh"
+[[ -f "$HOME/.config/snx-rs/vs-shell.sh" ]] && source "$HOME/.config/snx-rs/vs-shell.sh"
