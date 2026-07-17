@@ -106,4 +106,4 @@ export NODE_EXTRA_CA_CERTS="/home/dungtd19/Documents/vingroup-enterprise-ca/ving
 
 # Kiro CLI post block. Keep at the bottom of this file.
 [[ -f "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh"
-[[ -f "$HOME/.config/snx-rs/vs-shell.sh" ]] && source "$HOME/.config/snx-rs/vs-shell.sh"
+[[ -f "/home/dungtd19/.config/snx-rs/vs-shell.sh" ]] && source "/home/dungtd19/.config/snx-rs/vs-shell.sh"
