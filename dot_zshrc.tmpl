@@ -120,6 +120,7 @@ if [[ "$OSTYPE" == linux* ]]; then
   bindkey "^[Od" backward-word
 fi
 
+{{ if eq .chezmoi.os "linux" -}}
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
 [[ -d "$HOME/.rd/bin" ]] && export PATH="$HOME/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
@@ -127,10 +128,12 @@ fi
 # Vingroup enterprise CA (work machine only)
 [[ -f "$HOME/Documents/vingroup-enterprise-ca/vingroup-enterprise-ca.pem" ]] && export NODE_EXTRA_CA_CERTS="$HOME/Documents/vingroup-enterprise-ca/vingroup-enterprise-ca.pem"
 
-
+{{ end -}}
 # Kiro CLI post block. Keep at the bottom of this file.
 [[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh"
 [[ -f "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh"
+{{ if eq .chezmoi.os "linux" -}}
 
 # snx-rs VPN shell (work machine only)
 [[ -f "$HOME/.config/snx-rs/vs-shell.sh" ]] && source "$HOME/.config/snx-rs/vs-shell.sh"
+{{ end -}}
