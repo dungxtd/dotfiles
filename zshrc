@@ -51,13 +51,27 @@ function _omz_register_handler() {
   add-zsh-hook precmd "_omz_capture_${fn}"
 }
 
-zinit snippet OMZ::lib/functions.zsh
-zinit snippet OMZ::lib/git.zsh
-zinit snippet OMZ::plugins/git/git.plugin.zsh
-zinit snippet OMZ::themes/alanpeabody.zsh-theme
+# Stubs so the prompt renders cleanly before the turbo-loaded git lib
+# finishes — git_prompt_info/status get redefined once OMZ::lib/git.zsh loads.
+function git_prompt_info() { }
+function git_prompt_status() { }
+function ruby_prompt_info() { }
+
+# Turbo (wait lucid): load after the first prompt to keep startup fast.
+# NOTE: OMZ::themes/alanpeabody is intentionally NOT loaded — its PROMPT,
+# RPROMPT and git-prompt vars are fully overridden below, so it was dead weight.
+zinit wait lucid for \
+  OMZ::lib/functions.zsh \
+  OMZ::lib/git.zsh \
+  OMZ::plugins/git/git.plugin.zsh
+
+# syntax-highlighting last, also deferred
+zinit ice wait lucid
 zinit light zsh-users/zsh-syntax-highlighting
 
-function ruby_prompt_info() { }
+# completion system (cached: rebuild the dump at most once per day)
+autoload -Uz compinit
+if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then compinit; else compinit -C; fi
 
 # Override prompt (remove hostname) — uses %F/%f (nesting-safe) instead of
 # %{...%}, since kiro-cli's OSC prompt-wrapping also uses %{...%} and zsh
