@@ -37,11 +37,40 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# Prompt: user (magenta) cwd (blue) $ — same as the zsh prompt
-PS1='\[\e[35m\]\u\[\e[0m\] \[\e[34m\]\w\[\e[0m\]\$ '
+# Prompt — same as the zsh prompt:
+#   left:  user (magenta) cwd (blue) $
+#   right: "N ↵" (red, last exit code if non-zero), git status symbols, branch (green)
+# The right prompt (RPS1) is drawn by flyline; plain readline bash ignores it.
+PS1='\[\e[35m\]\u\[\e[0m\] \[\e[34m\]\w\[\e[0m\]$ '
 case "$TERM" in
   xterm*|rxvt*) PS1="\[\e]0;\u@\h: \w\a\]$PS1" ;;
 esac
+
+# OMZ git_prompt_status + git_prompt_info, same symbols/colors/order as the zsh theme.
+_prompt_git() {
+  local st ref s=
+  st=$(command git status --porcelain -b 2>/dev/null) || return 0
+  st=$'\n'$st
+  case $st in *$'\n''UU '*) s+='\e[33m ═\e[0m' ;; esac
+  case $st in *$'\n'' D '*|*$'\n''D  '*) s+='\e[31m ✖\e[0m' ;; esac
+  case $st in *$'\n''R  '*) s+='\e[35m ➜\e[0m' ;; esac
+  case $st in *$'\n''M  '*|*$'\n''MM '*|*$'\n'' M '*|*$'\n''AM '*|*$'\n'' T '*) s+='\e[34m ✹\e[0m' ;; esac
+  case $st in *$'\n''A  '*) s+='\e[32m ✚\e[0m' ;; esac
+  case $st in *$'\n''?? '*) s+='\e[36m ✭\e[0m' ;; esac
+  ref=$(command git symbolic-ref --short HEAD 2>/dev/null) ||
+    ref=$(command git describe --tags --exact-match HEAD 2>/dev/null) ||
+    ref=$(command git rev-parse --short HEAD 2>/dev/null) || ref=
+  # keep only safe characters: the prompt string is expanded again when drawn
+  ref=${ref//[^A-Za-z0-9._\/@+-]/}
+  printf '%s' "$s${ref:+\e[32m$ref\e[0m}"
+}
+_prompt_update() {
+  local rc=$?
+  RPS1=
+  ((rc)) && RPS1="\e[31m$rc ↵\e[0m"
+  RPS1+=" $(_prompt_git)"
+  return $rc
+}
 
 # Detect brew prefix (macOS: /opt/homebrew, Linux: /home/linuxbrew/.linuxbrew)
 if [ -x /opt/homebrew/bin/brew ]; then
@@ -74,6 +103,39 @@ _mise=$(
 [ -n "$_mise" ] && eval "$("$_mise" activate bash)"
 unset _mise
 
+# git aliases/functions (bash port of the OMZ git plugin used by ~/.zshrc)
+[ -f "$HOME/.config/bash/git.plugin.bash" ] && . "$HOME/.config/bash/git.plugin.bash"
+
+# take / mkcd (from OMZ lib/functions.zsh): mkdir+cd, or clone/download+cd
+mkcd() { mkdir -p "$@" && cd "${@: -1}"; }
+takedir() { mkcd "$@"; }
+takeurl() {
+  local data thedir
+  data="$(mktemp)"
+  curl -L "$1" > "$data"
+  tar xf "$data"
+  thedir="$(tar tf "$data" | head -n 1)"
+  rm "$data"
+  cd "$thedir"
+}
+takezip() {
+  local data thedir
+  data="$(mktemp)"
+  curl -L "$1" > "$data"
+  unzip "$data" -d "./"
+  thedir="$(unzip -l "$data" | awk 'NR==4 {print $4}' | sed 's/\/.*//')"
+  rm "$data"
+  cd "$thedir"
+}
+takegit() { git clone "$1" && cd "$(basename "${1%%.git}")"; }
+take() {
+  if [[ $1 =~ ^(https?|ftp).*\.(tar\.(gz|bz2|xz)|tgz)$ ]]; then takeurl "$1"
+  elif [[ $1 =~ ^(https?|ftp).*\.(zip)$ ]]; then takezip "$1"
+  elif [[ $1 =~ ^([A-Za-z0-9]+@|https?|git|ssh|ftps?|rsync).*\.git/?$ ]]; then takegit "$1"
+  else takedir "$@"
+  fi
+}
+
 {{ if eq .chezmoi.os "linux" -}}
 # Linux-only: input method
 export GTK_IM_MODULE=ibus
@@ -100,6 +162,13 @@ rdp() {
 {{ end -}}
 # Kiro CLI post block. Keep before flyline.
 [ -f "$HOME/.local/share/kiro-cli/shell/bashrc.post.bash" ] && . "$HOME/.local/share/kiro-cli/shell/bashrc.post.bash"
+
+# Right prompt: run first so it sees the command's exit code (mise/kiro hooks
+# are already in PROMPT_COMMAND by now).
+case ";${PROMPT_COMMAND:-};" in
+  *";_prompt_update;"*) ;;
+  *) PROMPT_COMMAND="_prompt_update${PROMPT_COMMAND:+;$PROMPT_COMMAND}" ;;
+esac
 
 # flyline (https://github.com/HalFrgrd/flyline): bash loadable builtin replacing
 # readline. Load the first build found (brew on the host, /usr/local in containers).
