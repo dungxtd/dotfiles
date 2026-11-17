@@ -1,29 +1,24 @@
 # dotfiles
 
-Personal shell config for macOS and Ubuntu, managed with [chezmoi](https://www.chezmoi.io).
+Personal bash config for Ubuntu (and macOS), managed with [chezmoi](https://www.chezmoi.io).
 
 ## Setup new machine
 
 ```bash
 # install chezmoi (macOS: brew install chezmoi; Linux: sh -c "$(curl -fsLS get.chezmoi.io)")
 chezmoi init --apply dungxtd/dotfiles
+chsh -s /usr/bin/bash      # bash as login shell (log out/in or reboot after)
+brew install flyline       # optional: line editor + right prompt (see below)
 ```
 
-This clones the source to `~/.local/share/chezmoi` and renders `~/.bashrc` and
-`~/.zshrc` for the current OS. Bash is the default shell on Linux (`chsh -s
-/usr/bin/bash`); `~/.profile` sources `~/.bashrc` for login shells. On first zsh
-launch, `~/.zshrc` automatically:
-- installs [zinit](https://github.com/zdharma-continuum/zinit) plugin manager
-- downloads and caches all plugins
-
-Subsequent terminal opens are fast (~110ms) — plugins load lazily after the first
-prompt via zinit turbo mode (`wait lucid`).
+This clones the source to `~/.local/share/chezmoi` and renders `~/.bashrc` for the
+current OS. `~/.profile` (distro default) sources `~/.bashrc` for login shells.
 
 ## Everyday use
 
 ```bash
-chezmoi edit ~/.bashrc    # edit the source template (or ~/.zshrc)
-chezmoi apply             # render + write ~/.bashrc, ~/.zshrc
+chezmoi edit ~/.bashrc    # edit the source template
+chezmoi apply             # render + write
 chezmoi diff              # preview pending changes
 chezmoi update            # git pull + apply (sync a machine)
 chezmoi cd                # open the source repo for git operations
@@ -32,31 +27,24 @@ chezmoi cd                # open the source repo for git operations
 ## Files
 
 - `dot_bashrc.tmpl` → `~/.bashrc`
-- `dot_zshrc.tmpl` → `~/.zshrc`
+- `dot_config/bash/git-aliases.bash` → `~/.config/bash/git-aliases.bash`
 - `.chezmoiignore` — keeps `README.md` / `.gitignore` out of `$HOME`
+- `~/.bashrc.local` — machine-local additions (work functions, internal hosts);
+  sourced if present, never committed
 
 ## Cross-OS handling
 
-- Generic OS differences (rdp, ibus, Ctrl+←/→ keybindings) use runtime
-  `[[ "$OSTYPE" == linux* ]]` guards — one file works everywhere.
-- Work-machine-only bits (Rancher Desktop, Vingroup CA cert, snx-rs VPN) are
-  gated behind `{{ if eq .chezmoi.os "linux" }}`, so macOS renders a clean file
-  with none of them.
+- Linux-only bits (ibus, `rdpx`, Rancher Desktop, work CA cert, snx-rs VPN) are
+  gated behind `{{ if eq .chezmoi.os "linux" }}`, so macOS renders a clean file.
 
 ## What's included
 
-- [zinit](https://github.com/zdharma-continuum/zinit) plugin manager (turbo mode)
-- oh-my-zsh git library + git plugin (async git prompt, aliases)
-- custom `%F/%f` prompt (no hostname; nesting-safe for kiro-cli OSC wrapping),
-  branch + git status symbols + exit code in `RPROMPT`
-- [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
-- cached `compinit` completion system
-- [mise](https://mise.jdx.dev) runtime version manager
-- [bun](https://bun.sh) JS runtime
-
-Bash (`~/.bashrc`):
 - [flyline](https://github.com/HalFrgrd/flyline) line editor (bash loadable
   builtin), loaded from the first build found: `$BREW_PREFIX/lib/bash/flyline`
-  (host, `brew install flyline`) or `/usr/local/lib/bash/libflyline.so` (containers)
-- same aliases, PATH extras, mise, rdp and work-machine bits as `~/.zshrc`
-- prompt `user cwd$` matching the zsh prompt
+  (`brew install flyline`) or `/usr/local/lib/bash/libflyline.so` (containers)
+- prompt: `user cwd$` on the left; on the right (flyline `RPS1`) the last exit
+  code `N ↵`, git status symbols (═ ✖ ➜ ✹ ✚ ✭) and the branch
+- git aliases/functions (`gst`, `gco`, `gcmsg`, `ggp`, `gpsup`, ...), adapted from
+  the ohmyzsh git plugin (MIT)
+- `take` / `mkcd`, `k9s` (all `~/.kube/cluster-*` kubeconfigs), `cl` / `cx`
+- [mise](https://mise.jdx.dev), [bun](https://bun.sh), Homebrew, bash-completion

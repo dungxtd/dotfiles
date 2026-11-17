@@ -1,9 +1,8 @@
-# git aliases/functions for bash — port of oh-my-zsh plugins/git/git.plugin.zsh
-# (same names as the zsh setup). Generated from the OMZ file; only zsh-only syntax
-# was rewritten (is-at-least, git_version, compdef, ${x:t}, gccd, deprecated alias).
-# Sourced by ~/.bashrc.
+# git aliases/functions for bash. Sourced by ~/.bashrc.
+#
+# Adapted from the ohmyzsh git plugin (plugins/git/git.plugin.zsh).
+# MIT License, Copyright (c) 2009-2025 Robby Russell and contributors.
 
-# from OMZ lib/git.zsh
 function git_current_branch() {
   local ref ret
   ref=$(command git symbolic-ref --quiet HEAD 2>/dev/null)

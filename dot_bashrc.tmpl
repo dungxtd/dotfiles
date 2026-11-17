@@ -1,6 +1,6 @@
 # ~/.bashrc — managed by chezmoi (github.com/dungxtd/dotfiles). Edit with
-# `chezmoi edit ~/.bashrc`. Bash counterpart of dot_zshrc.tmpl; login shells read it
-# via ~/.profile.
+# `chezmoi edit ~/.bashrc`. Login shells read it via ~/.profile. Machine-local
+# additions go in ~/.bashrc.local (not in the repo).
 
 # Interactive shells only.
 case $- in
@@ -37,7 +37,7 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# Prompt — same as the zsh prompt:
+# Prompt:
 #   left:  user (magenta) cwd (blue) $
 #   right: "N ↵" (red, last exit code if non-zero), git status symbols, branch (green)
 # The right prompt (RPS1) is drawn by flyline; plain readline bash ignores it.
@@ -46,7 +46,7 @@ case "$TERM" in
   xterm*|rxvt*) PS1="\[\e]0;\u@\h: \w\a\]$PS1" ;;
 esac
 
-# OMZ git_prompt_status + git_prompt_info, same symbols/colors/order as the zsh theme.
+# git status symbols (unmerged, deleted, renamed, modified, added, untracked) + branch
 _prompt_git() {
   local st ref s=
   st=$(command git status --porcelain -b 2>/dev/null) || return 0
@@ -94,6 +94,13 @@ export PATH
 alias cl='claude --dangerously-skip-permissions'
 alias cx='codex --dangerously-bypass-approvals-and-sandbox'
 
+# k9s: load every kubeconfig under ~/.kube/cluster-*
+k9s() {
+  local cfgs
+  cfgs=$(ls -d "$HOME"/.kube/cluster-* 2>/dev/null | paste -sd:)
+  KUBECONFIG=${cfgs:-$KUBECONFIG} command k9s "$@"
+}
+
 # mise — prefer local bin, then brew, then PATH
 _mise=$(
   command -v "$HOME/.local/bin/mise" 2>/dev/null ||
@@ -103,10 +110,10 @@ _mise=$(
 [ -n "$_mise" ] && eval "$("$_mise" activate bash)"
 unset _mise
 
-# git aliases/functions (bash port of the OMZ git plugin used by ~/.zshrc)
-[ -f "$HOME/.config/bash/git.plugin.bash" ] && . "$HOME/.config/bash/git.plugin.bash"
+# git aliases/functions (gst, gco, gcmsg, ggp, ...)
+[ -f "$HOME/.config/bash/git-aliases.bash" ] && . "$HOME/.config/bash/git-aliases.bash"
 
-# take / mkcd (from OMZ lib/functions.zsh): mkdir+cd, or clone/download+cd
+# take / mkcd: mkdir+cd, or clone/download+cd
 mkcd() { mkdir -p "$@" && cd "${@: -1}"; }
 takedir() { mkcd "$@"; }
 takeurl() {
@@ -140,14 +147,13 @@ take() {
 # Linux-only: input method
 export GTK_IM_MODULE=ibus
 
-# Open PAM RDP file with drive transfer support
-rdp() {
-  local file="$1"
-  grep -qF "redirectdrives:i:1" "$file" || echo "redirectdrives:i:1" >> "$file"
-  grep -qF "screen mode id:i:1"  "$file" || echo "screen mode id:i:1"  >> "$file"
-  (timeout 12h xfreerdp "$file" /drive:transfer,"$HOME/Downloads" /cert:ignore &>/dev/null) &
-  disown $!
-  echo "RDP started [PID $!]"
+# xfreerdp 2.x, windowed, share ~/Downloads as \\tsclient\transfer
+rdpx() {
+  [[ -f "$1" ]] || { echo "usage: rdpx file.rdp"; return 1; }
+  local tmp; tmp="$(mktemp --suffix=.rdp)" || return 1
+  sed 's/^screen mode id:i:2/screen mode id:i:1/' "$1" > "$tmp"
+  xfreerdp "$tmp" /drive:transfer,"$HOME/Downloads" +clipboard /cert:ignore /size:1600x900
+  rm -f "$tmp"
 }
 
 # Rancher Desktop
@@ -162,6 +168,9 @@ rdp() {
 {{ end -}}
 # Kiro CLI post block. Keep before flyline.
 [ -f "$HOME/.local/share/kiro-cli/shell/bashrc.post.bash" ] && . "$HOME/.local/share/kiro-cli/shell/bashrc.post.bash"
+
+# Machine-local additions (work functions, secrets paths) — not in the repo
+[ -f "$HOME/.bashrc.local" ] && . "$HOME/.bashrc.local"
 
 # Right prompt: run first so it sees the command's exit code (mise/kiro hooks
 # are already in PROMPT_COMMAND by now).
