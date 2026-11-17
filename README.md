@@ -9,8 +9,10 @@ Personal shell config for macOS and Ubuntu, managed with [chezmoi](https://www.c
 chezmoi init --apply dungxtd/dotfiles
 ```
 
-This clones the source to `~/.local/share/chezmoi` and renders `~/.zshrc` for the
-current OS. On first shell launch, `~/.zshrc` automatically:
+This clones the source to `~/.local/share/chezmoi` and renders `~/.bashrc` and
+`~/.zshrc` for the current OS. Bash is the default shell on Linux (`chsh -s
+/usr/bin/bash`); `~/.profile` sources `~/.bashrc` for login shells. On first zsh
+launch, `~/.zshrc` automatically:
 - installs [zinit](https://github.com/zdharma-continuum/zinit) plugin manager
 - downloads and caches all plugins
 
@@ -20,8 +22,8 @@ prompt via zinit turbo mode (`wait lucid`).
 ## Everyday use
 
 ```bash
-chezmoi edit ~/.zshrc     # edit the source template
-chezmoi apply             # render + write ~/.zshrc
+chezmoi edit ~/.bashrc    # edit the source template (or ~/.zshrc)
+chezmoi apply             # render + write ~/.bashrc, ~/.zshrc
 chezmoi diff              # preview pending changes
 chezmoi update            # git pull + apply (sync a machine)
 chezmoi cd                # open the source repo for git operations
@@ -29,6 +31,7 @@ chezmoi cd                # open the source repo for git operations
 
 ## Files
 
+- `dot_bashrc.tmpl` → `~/.bashrc`
 - `dot_zshrc.tmpl` → `~/.zshrc`
 - `.chezmoiignore` — keeps `README.md` / `.gitignore` out of `$HOME`
 
@@ -50,3 +53,10 @@ chezmoi cd                # open the source repo for git operations
 - cached `compinit` completion system
 - [mise](https://mise.jdx.dev) runtime version manager
 - [bun](https://bun.sh) JS runtime
+
+Bash (`~/.bashrc`):
+- [flyline](https://github.com/HalFrgrd/flyline) line editor (bash loadable
+  builtin), loaded from the first build found: `$BREW_PREFIX/lib/bash/flyline`
+  (host, `brew install flyline`) or `/usr/local/lib/bash/libflyline.so` (containers)
+- same aliases, PATH extras, mise, rdp and work-machine bits as `~/.zshrc`
+- prompt `user cwd$` matching the zsh prompt

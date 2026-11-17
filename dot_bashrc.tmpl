@@ -1,0 +1,114 @@
+# ~/.bashrc — managed by chezmoi (github.com/dungxtd/dotfiles). Edit with
+# `chezmoi edit ~/.bashrc`. Bash counterpart of dot_zshrc.tmpl; login shells read it
+# via ~/.profile.
+
+# Interactive shells only.
+case $- in
+  *i*) ;;
+  *) return ;;
+esac
+
+# Kiro CLI pre block. Keep at the top of this file.
+[ -f "$HOME/.local/share/kiro-cli/shell/bashrc.pre.bash" ] && . "$HOME/.local/share/kiro-cli/shell/bashrc.pre.bash"
+
+# History
+HISTCONTROL=ignoreboth
+HISTSIZE=10000
+HISTFILESIZE=20000
+shopt -s histappend checkwinsize
+
+# lesspipe, colors, ls aliases (Debian/Ubuntu defaults)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+if [ -x /usr/bin/dircolors ]; then
+  if [ -r ~/.dircolors ]; then eval "$(dircolors -b ~/.dircolors)"; else eval "$(dircolors -b)"; fi
+  alias ls='ls --color=auto'
+  alias grep='grep --color=auto'
+fi
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Completion
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+# Prompt: user (magenta) cwd (blue) $ — same as the zsh prompt
+PS1='\[\e[35m\]\u\[\e[0m\] \[\e[34m\]\w\[\e[0m\]\$ '
+case "$TERM" in
+  xterm*|rxvt*) PS1="\[\e]0;\u@\h: \w\a\]$PS1" ;;
+esac
+
+# Detect brew prefix (macOS: /opt/homebrew, Linux: /home/linuxbrew/.linuxbrew)
+if [ -x /opt/homebrew/bin/brew ]; then
+  BREW_PREFIX=/opt/homebrew
+elif [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+  BREW_PREFIX=/home/linuxbrew/.linuxbrew
+fi
+[ -n "${BREW_PREFIX:-}" ] && eval "$("$BREW_PREFIX/bin/brew" shellenv bash)"
+
+# PATH extras (guarded; prepend only once)
+_path_prepend() { [ -d "$1" ] && case ":$PATH:" in *":$1:"*) ;; *) PATH="$1:$PATH" ;; esac; }
+export BUN_INSTALL="$HOME/.bun"
+_path_prepend "$BUN_INSTALL/bin"
+_path_prepend "$HOME/.antigravity/antigravity/bin"
+_path_prepend "$HOME/.antigravity-ide/antigravity-ide/bin"
+_path_prepend "$HOME/scripts"
+_path_prepend "$HOME/.local/bin"
+unset -f _path_prepend
+export PATH
+
+alias cl='claude --dangerously-skip-permissions'
+alias cx='codex --dangerously-bypass-approvals-and-sandbox'
+
+# mise — prefer local bin, then brew, then PATH
+_mise=$(
+  command -v "$HOME/.local/bin/mise" 2>/dev/null ||
+  { [ -n "${BREW_PREFIX:-}" ] && command -v "$BREW_PREFIX/bin/mise" 2>/dev/null; } ||
+  command -v mise 2>/dev/null
+)
+[ -n "$_mise" ] && eval "$("$_mise" activate bash)"
+unset _mise
+
+{{ if eq .chezmoi.os "linux" -}}
+# Linux-only: input method
+export GTK_IM_MODULE=ibus
+
+# Open PAM RDP file with drive transfer support
+rdp() {
+  local file="$1"
+  grep -qF "redirectdrives:i:1" "$file" || echo "redirectdrives:i:1" >> "$file"
+  grep -qF "screen mode id:i:1"  "$file" || echo "screen mode id:i:1"  >> "$file"
+  (timeout 12h xfreerdp "$file" /drive:transfer,"$HOME/Downloads" /cert:ignore &>/dev/null) &
+  disown $!
+  echo "RDP started [PID $!]"
+}
+
+# Rancher Desktop
+[ -d "$HOME/.rd/bin" ] && export PATH="$HOME/.rd/bin:$PATH"
+
+# Vingroup enterprise CA (work machine only)
+[ -f "$HOME/Documents/vingroup-enterprise-ca/vingroup-enterprise-ca.pem" ] && export NODE_EXTRA_CA_CERTS="$HOME/Documents/vingroup-enterprise-ca/vingroup-enterprise-ca.pem"
+
+# snx-rs VPN shell (work machine only)
+[ -f "$HOME/.config/snx-rs/vs-shell.sh" ] && . "$HOME/.config/snx-rs/vs-shell.sh"
+
+{{ end -}}
+# Kiro CLI post block. Keep before flyline.
+[ -f "$HOME/.local/share/kiro-cli/shell/bashrc.post.bash" ] && . "$HOME/.local/share/kiro-cli/shell/bashrc.post.bash"
+
+# flyline (https://github.com/HalFrgrd/flyline): bash loadable builtin replacing
+# readline. Load the first build found (brew on the host, /usr/local in containers).
+if [ -t 0 ]; then
+  for _fl in \
+    "${BREW_PREFIX:-/nonexistent}/lib/bash/flyline" \
+    /usr/local/lib/bash/libflyline.so \
+    /usr/local/lib/bash/flyline; do
+    [ -f "$_fl" ] && enable -f "$_fl" flyline 2>/dev/null && break
+  done
+  unset _fl
+fi
